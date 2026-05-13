@@ -1,0 +1,17 @@
+/.cache
+/.qtc_clangd
+/debug
+/bin
+/moc
+/Makefile
+/Makefile.Debug
+/Makefile.Release
+/obj
+/binMinGW64
+/release
+*.debug
+*.release
+*.user
+*.stash
+*.bak
+*.h
