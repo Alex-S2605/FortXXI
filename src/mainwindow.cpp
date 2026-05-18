@@ -111,50 +111,53 @@ void MainWindow::moveLegendFirstToEnd()
 
 void MainWindow::slotGraphRepaint()
 {
-    cpProcStat->xAxis->setLabel("CPU Usage: " + QString::number(procReceiver->valueProc.last(), 'f', 1) + "%");
-    cpProcStat->graph(0)->setName("CPU Usage\n" + QString::number(procReceiver->valueProc.last(), 'f', 1) + "%");
-    if (cpProcStat->graphCount() == 1) {
-        int iColor = 0;
-        for (int i = 0; i < procReceiver->countProc; i++, iColor++) {
-            cpProcStat->addGraph();
-            if (iColor >= colorV.size()) iColor -= colorV.size();
-            cpProcStat->graph(i + 1)->setPen(QPen(colorV[iColor]));
-            QPen pen = cpProcStat->graph(i + 1)->pen();
-            pen.setWidth(3);
-            cpProcStat->graph(i + 1)->setPen(pen);
-            cpProcStat->graph(i + 1)->setName("CPU" + QString::number(i));
-            cpProcStat->legend->itemWithPlottable(cpProcStat->graph(i + 1))->setTextColor(colorV[iColor]);
+    if (procReceiver->mutexProc.try_lock()) {
+        cpProcStat->xAxis->setLabel("CPU Usage: " + QString::number(procReceiver->valueProc.last(), 'f', 1) + "%");
+        cpProcStat->graph(0)->setName("CPU Usage\n" + QString::number(procReceiver->valueProc.last(), 'f', 1) + "%");
+        if (cpProcStat->graphCount() == 1) {
+            int iColor = 0;
+            for (int i = 0; i < procReceiver->countProc; i++, iColor++) {
+                cpProcStat->addGraph();
+                if (iColor >= colorV.size()) iColor -= colorV.size();
+                cpProcStat->graph(i + 1)->setPen(QPen(colorV[iColor]));
+                QPen pen = cpProcStat->graph(i + 1)->pen();
+                pen.setWidth(3);
+                cpProcStat->graph(i + 1)->setPen(pen);
+                cpProcStat->graph(i + 1)->setName("CPU" + QString::number(i));
+                cpProcStat->legend->itemWithPlottable(cpProcStat->graph(i + 1))->setTextColor(colorV[iColor]);
+            }
+            for (int i = 1; i < cpProcStat->graphCount(); ++i) cpProcStat->legend->item(i)->setVisible(false);
         }
-        for (int i = 1; i < cpProcStat->graphCount(); ++i) cpProcStat->legend->item(i)->setVisible(false);
-    }
-    if (cbMultyProc->isChecked()) {
-        if (cpProcStat->graph(0)->visible()) {
-            moveLegendFirstToEnd();
-            for (int i = 0; i < procReceiver->countProc; i++) cpProcStat->legend->item(i)->setVisible(true);
+        if (cbMultyProc->isChecked()) {
+            if (cpProcStat->graph(0)->visible()) {
+                moveLegendFirstToEnd();
+                for (int i = 0; i < procReceiver->countProc; i++) cpProcStat->legend->item(i)->setVisible(true);
+            }
+            cpProcStat->graph(0)->setVisible(false);
+            for (int i = 0; i < procReceiver->countProc; i++) {
+                cpProcStat->graph(i + 1)->setVisible(true);
+                cpProcStat->graph(i + 1)->data()->clear();
+                cpProcStat->graph(i + 1)->setData(procReceiver->vKey, procReceiver->vValueProc[i]);
+                cpProcStat->xAxis->setRange(procReceiver->vKey.last() - 299, procReceiver->vKey.last());
+                cpProcStat->yAxis->setRange(0, procReceiver->procMaxV);
+            }
         }
-        cpProcStat->graph(0)->setVisible(false);
-        for (int i = 0; i < procReceiver->countProc; i++) {
-            cpProcStat->graph(i + 1)->setVisible(true);
-            cpProcStat->graph(i + 1)->data()->clear();
-            cpProcStat->graph(i + 1)->setData(procReceiver->vKey, procReceiver->vValueProc[i]);
+        else {
+            for (int i = 0; i < procReceiver->countProc; i++)
+                cpProcStat->graph(i + 1)->setName("CPU" + QString::number(i) + " Usage\n"
+                                                  + QString::number( procReceiver->vValueProc[i].last(), 'f', 1) + "%");
+            if (!cpProcStat->graph(0)->visible()) {
+                for (int i = 0; i < procReceiver->countProc; i++) moveLegendFirstToEnd();
+                cpProcStat->legend->item(0)->setVisible(true);
+            }
+            for (int i = 0; i < procReceiver->countProc; i++) cpProcStat->graph(i + 1)->setVisible(false);
+            cpProcStat->graph(0)->setVisible(true);
+            cpProcStat->graph(0)->data()->clear();
+            cpProcStat->graph(0)->setData(procReceiver->vKey, procReceiver->valueProc);
             cpProcStat->xAxis->setRange(procReceiver->vKey.last() - 299, procReceiver->vKey.last());
-            cpProcStat->yAxis->setRange(0, procReceiver->procMaxV);
+            cpProcStat->yAxis->setRange(0, procReceiver->procMax);
         }
+        cpProcStat->replot();
     }
-    else {
-        for (int i = 0; i < procReceiver->countProc; i++)
-            cpProcStat->graph(i + 1)->setName("CPU Usage" + QString::number(i) + "\n"
-                                              + QString::number( procReceiver->vValueProc[i].last(), 'f', 1) + "%");
-        if (!cpProcStat->graph(0)->visible()) {
-            for (int i = 0; i < procReceiver->countProc; i++) moveLegendFirstToEnd();
-            cpProcStat->legend->item(0)->setVisible(true);
-        }
-        for (int i = 0; i < procReceiver->countProc; i++) cpProcStat->graph(i + 1)->setVisible(false);
-        cpProcStat->graph(0)->setVisible(true);
-        cpProcStat->graph(0)->data()->clear();
-        cpProcStat->graph(0)->setData(procReceiver->vKey, procReceiver->valueProc);
-        cpProcStat->xAxis->setRange(procReceiver->vKey.last() - 299, procReceiver->vKey.last());
-        cpProcStat->yAxis->setRange(0, procReceiver->procMax);
-    }
-    cpProcStat->replot();
+    procReceiver->mutexProc.unlock();
 }

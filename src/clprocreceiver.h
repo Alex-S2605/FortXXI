@@ -6,6 +6,7 @@
 #include <QMutex>
 #include <QVector>
 #include <QDateTime>
+#include <QUdpSocket>
 
 typedef QVector <double> typeValueProc;
 
@@ -26,10 +27,16 @@ private:
     QTimer * timer;
     quint64 dtSaterted;
     quint64 counter;
-    void slorReceive();
+    QUdpSocket * socket;
+    bool bFirstData;
+    void slotReceive();
+    quint32 messageCounter;
 
 public slots:
     void slotOnStart();
+
+private slots:
+    void slotReadSocket();
 
 signals:
     void signalProcIsReseived();
