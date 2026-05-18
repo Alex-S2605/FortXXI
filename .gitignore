@@ -15,3 +15,4 @@
 *.stash
 *.bak
 *.o
+moc_*.*
