@@ -22,7 +22,7 @@ MainWindow::MainWindow(QWidget *parent)
     pal_.setColor(QPalette::Window, Qt::white);
     this->setAutoFillBackground(true);
     this->setPalette(pal_); // Белый цвет для всей формы
-    QWidget * nainWidget = new QWidget;
+    // QWidget * nainWidget = new QWidget;
     QVBoxLayout * nainVBoxLayout = new QVBoxLayout;
     cbMultyProc = new QCheckBox;
     cbMultyProc->setText("For each proc");
@@ -43,7 +43,7 @@ MainWindow::MainWindow(QWidget *parent)
     gbProc->setLayout(vblProc);
     nainVBoxLayout->addWidget(gbProc, 10);
 
-    nainWidget->setLayout(nainVBoxLayout);
+    // nainWidget->setLayout(nainVBoxLayout);
     setCentralWidget(gbProc); // Поменять
     // setCentralWidget(nainWidget); // Поменять
 
